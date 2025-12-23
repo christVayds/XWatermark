@@ -1,0 +1,48 @@
+from PIL import Image, ImageDraw, ImageFont
+import os
+
+input_folder = "C:/Users/Administrator/Desktop/Jirah/test"
+output_folder = "C:/Users/Administrator/Desktop/Jirah/done"
+watermark = "C:/Users/Administrator/Downloads/watermark.png"
+opacity = 255
+scale = 3.0 # size of the watermark
+position = 'bottom_right'
+
+os.makedirs(output_folder, exist_ok=True)
+
+# load watermark
+watermark = Image.open(watermark).convert("RGBA")
+
+for filename in os.listdir(input_folder):
+    if not filename.lower().endswith((".png", ".jpg", ".jpeg")):
+        continue
+
+    img_path = os.path.join(input_folder, filename)
+    base_image = Image.open(img_path).convert("RGBA")
+
+    # resize watermark
+    #w_ratio = base_image.width / 0.2 / watermark.width
+    #h_ratio = base_image.height / 0.2 / watermark.height
+    #ratio = min(w_ratio, h_ratio, 1)
+    #new_size = (int(watermark.width * ratio), int(watermark.height * ratio))
+    nwidth = int(watermark.width * scale)
+    nheight = int(watermark.height * scale)
+    new_size = (nwidth, nheight)
+    watermark_resized = watermark.resize(new_size, Image.Resampling.LANCZOS)
+
+    watermark_mask = watermark_resized.split()[3].point(lambda i: i * opacity / 255)
+    watermark_resized.putalpha(watermark_mask)
+
+    x = base_image.width - watermark_resized.width - 10
+    y = base_image.height - watermark_resized.height - 10
+
+    # paste watermark
+    base_image.paste(watermark_resized, (x, y), watermark_resized)
+    base_image = base_image.convert("RGB")
+
+    # save
+    path = os.path.join(output_folder, filename)
+    base_image.save(os.path.join(path))
+    print(f"Save {path}")
+
+print("done")
